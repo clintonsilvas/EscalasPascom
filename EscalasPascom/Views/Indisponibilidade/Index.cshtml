@@ -1,0 +1,134 @@
+﻿@model List<EscalasPascom.Models.Pessoa>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger">@TempData["Erro"]</div>
+}
+
+@{
+    var mesSelecionado = ViewBag.MesSelecionado as int? ?? DateTime.Now.Month;
+    var anoSelecionado = ViewBag.AnoSelecionado as int? ?? DateTime.Now.Year;
+
+    int diasNoMes = DateTime.DaysInMonth(anoSelecionado, mesSelecionado);
+
+    ViewData["Title"] = "Indisponibilidades";
+
+    var meses = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.MonthNames
+        .Where(m => !string.IsNullOrEmpty(m))
+        .Select((m, i) => new { Nome = m, Numero = i + 1 }).ToList();
+
+    var anos = Enumerable.Range(DateTime.Now.Year - 2, 5).ToList();
+}
+
+<style>
+    /* Linhas alternadas */
+    .table-striped tbody tr:nth-child(odd) {
+        background-color: #f9f9f9;
+    }
+
+    /* Cabeçalho fixo */
+    .table-fixed-header thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 2;
+    }
+</style>
+
+<h2>Indisponibilidades</h2>
+
+<form method="get" asp-action="Index" class="form-inline mb-3">
+    <label for="mes">Mês:</label>
+    <select id="mes" name="mes" class="form-control mx-2">
+        @foreach (var mes in meses)
+        {
+            if (mes.Numero == mesSelecionado)
+            {
+                <option value="@mes.Numero" selected>@mes.Nome</option>
+            }
+            else
+            {
+                <option value="@mes.Numero">@mes.Nome</option>
+            }
+        }
+    </select>
+
+    <label for="ano">Ano:</label>
+    <select id="ano" name="ano" class="form-control mx-2">
+        @foreach (var a in anos)
+        {
+            if (a == anoSelecionado)
+            {
+                <option value="@a" selected>@a</option>
+            }
+            else
+            {
+                <option value="@a">@a</option>
+            }
+        }
+    </select>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+<form method="post" asp-action="SalvarIndisponibilidades">
+    <input type="hidden" name="mes" value="@mesSelecionado" />
+    <input type="hidden" name="ano" value="@anoSelecionado" />
+
+    <div style="overflow-x:auto; max-height: 500px;">
+        <table class="table table-bordered table-sm table-striped table-fixed-header">
+            <thead>
+                <tr>
+                    <th>Pessoa</th>
+                    @for (int d = 1; d <= diasNoMes; d++)
+                    {
+                        <th>@d</th>
+                    }
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pessoa in Model)
+                {
+                    <tr>
+                        <td>@pessoa.Nome</td>
+                        @for (int d = 1; d <= diasNoMes; d++)
+                        {
+                            bool marcado = pessoa.Indisponibilidades.Any(i =>
+                                i.Data.Year == anoSelecionado &&
+                                i.Data.Month == mesSelecionado &&
+                                i.Data.Day == d
+                            );
+                            <td class="text-center">
+                                <input type="checkbox"
+                                       class="chk-@pessoa.Id"
+                                       name="indisponibilidadesPorPessoa[@pessoa.Id][]"
+                                       value="@d"
+                                       @(marcado ? "checked" : "") />
+                            </td>
+                        }
+                        <td>
+                            <button type="button" class="btn btn-sm btn-success" onclick="marcarTudo(@pessoa.Id)">Marcar tudo</button>
+                            <button type="button" class="btn btn-sm btn-warning" onclick="desmarcarTudo(@pessoa.Id)">Desmarcar tudo</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Salvar</button>
+</form>
+
+<script>
+    function marcarTudo(id) {
+        document.querySelectorAll(".chk-" + id).forEach(c => c.checked = true);
+    }
+    function desmarcarTudo(id) {
+        document.querySelectorAll(".chk-" + id).forEach(c => c.checked = false);
+    }
+</script>

@@ -1,0 +1,99 @@
+﻿@model List<EscalasPascom.ViewModels.PessoaViewModel>
+@{
+    ViewData["Title"] = "Pessoas";
+}
+
+<h1>Pessoas</h1>
+
+<form asp-action="SalvarPessoas" method="post">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Papéis</th>
+                <th>Ativo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="tabela-pessoas">
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="hidden" name="[@i].Id" value="@Model[i].Id" />
+                        <input type="text" class="form-control" name="[@i].Nome" value="@Model[i].Nome" />
+                    </td>                    
+                    <td>
+                        @foreach (var papel in Model[i].TodosPapeis)
+                        {
+                            var papelId = int.Parse(papel.Value);
+                            var isChecked = Model[i].PapeisSelecionados.Contains(papelId);
+
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       name="[@i].PapeisSelecionados"
+                                       value="@papelId"
+                                       @(isChecked ? "checked" : "") />
+                                <label class="form-check-label">@papel.Text</label>
+                            </div>
+                        }
+                    </td>                    
+                    <td>
+                        <input type="checkbox" name="[@i].IsAtivo" value="true" @(Model[i].IsAtivo ? "checked" : "") />
+                        <input type="hidden" name="[@i].IsAtivo" value="false" />
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger" onclick="removerLinha(this)">Remover</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="button" class="btn btn-secondary" onclick="adicionarLinha()">Adicionar Pessoa</button>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+</form>
+
+@section Scripts {
+    <script>
+        function adicionarLinha() {
+            var index = document.querySelectorAll('#tabela-pessoas tr').length;
+
+            var novaLinha = `
+                <tr>
+                    <td>
+                        <input type="hidden" name="[${index}].Id" value="0" />
+                        <input type="text" class="form-control" name="[${index}].Nome" value="" />
+                    </td>
+                    <td>
+                        @foreach (var papel in Model.First().TodosPapeis)
+                        {
+                                    <div class="form-check">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           name="[${index}].PapeisSelecionados"
+                                           value="@papel.Value" />
+                                    <label class="form-check-label">@papel.Text</label>
+                                </div>
+                        }
+                    </td>
+                    <td>
+                        <input type="checkbox" name="[${index}].IsAtivo" value="true" checked />
+                        <input type="hidden" name="[${index}].IsAtivo" value="false" />
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger" onclick="removerLinha(this)">Remover</button>
+                    </td>
+                </tr>
+            `;
+
+            document.querySelector('#tabela-pessoas').insertAdjacentHTML('beforeend', novaLinha);
+        }
+
+
+        function removerLinha(botao) {
+            botao.closest('tr').remove();
+        }
+    </script>
+}

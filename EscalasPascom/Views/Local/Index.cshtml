@@ -1,0 +1,56 @@
+﻿@model List<EscalasPascom.Models.Local>
+
+@{
+    ViewData["Title"] = "Locais";
+}
+
+<h2>Gerenciar Locais</h2>
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger">@TempData["Erro"]</div>
+}
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+<form asp-action="Salvar" method="post">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Ativo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="hidden" name="[@i].Id" value="@Model[i].Id" />
+                        <input type="text" name="[@i].Nome" value="@Model[i].Nome" class="form-control" />
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox" name="[@i].Ativo" value="true" @(Model[i].Ativo ? "checked" : "") />
+                        <input type="hidden" name="[@i].Ativo" value="false" />
+                    </td>
+                </tr>
+            }
+
+            <!-- Linha para adicionar novo local -->
+            <tr>
+                <td>
+                    <input type="hidden" name="[@Model.Count].Id" value="0" />
+                    <input type="text" name="[@Model.Count].Nome" placeholder="Novo local" class="form-control" />
+                </td>
+                <td class="text-center">
+                    <input type="checkbox" name="[@Model.Count].Ativo" value="true" checked />
+                    <input type="hidden" name="[@Model.Count].Ativo" value="false" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Salvar Tudo</button>
+</form>

@@ -1,0 +1,99 @@
+﻿@model List<Missa>
+
+@{
+    ViewBag.Title = "Escala de Missas";
+    var mesSelecionado = ViewBag.MesSelecionado as int? ?? DateTime.Now.Month;
+    var anoSelecionado = ViewBag.AnoSelecionado as int? ?? DateTime.Now.Year;
+    var meses = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.MonthNames
+        .Where(m => !string.IsNullOrEmpty(m))
+        .Select((m, i) => new { Nome = m, Numero = i + 1 }).ToList();
+
+    var anos = Enumerable.Range(DateTime.Now.Year - 2, 5).ToList();
+
+    int diasNoMes = DateTime.DaysInMonth(anoSelecionado, mesSelecionado);
+    bool sorteado = ViewBag.Sorteado ?? false;
+}
+
+<h2>Escala de Missas</h2>
+
+<form method="get" asp-action="Index" class="form-inline mb-3">
+    <label for="mes">Mês:</label>
+    <select id="mes" name="mes" class="form-control mx-2">
+        @foreach (var mes in meses)
+        {
+            if (mes.Numero == mesSelecionado)
+            {
+                <option value="@mes.Numero" selected>@mes.Nome</option>
+            }
+            else
+            {
+                <option value="@mes.Numero">@mes.Nome</option>
+            }
+        }
+    </select>
+
+    <label for="ano">Ano:</label>
+    <select id="ano" name="ano" class="form-control mx-2">
+        @foreach (var a in anos)
+        {
+            if (a == anoSelecionado)
+            {
+                <option value="@a" selected>@a</option>
+            }
+            else
+            {
+                <option value="@a">@a</option>
+            }
+        }
+    </select>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+
+<form method="post" asp-action="Sortear">
+    <input type="hidden" name="mes" value="@mesSelecionado" />
+    <input type="hidden" name="ano" value="@anoSelecionado" />
+    <button type="submit" class="btn btn-success mb-3"
+        @(sorteado ? "disabled" : "")>
+        Sortear Escala
+    </button>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Local</th>
+            <th>Operador</th>
+            <th>Câmera/Som</th>
+            <th>Mídia</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var missa in Model)
+        {
+            var operadores = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Operador")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+            var fotografos = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Foto/Som")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+            var midias = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Mídia")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+            <tr>
+                <td>@missa.Data.ToString("dd/MM/yyyy")</td>
+                <td>@missa.Local?.Nome</td>
+                <td>@string.Join(", ", operadores)</td>
+                <td>@string.Join(", ", fotografos)</td>
+                <td>@string.Join(", ", midias)</td>
+            </tr>
+        }
+    </tbody>
+</table>

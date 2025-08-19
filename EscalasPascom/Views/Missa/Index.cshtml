@@ -1,0 +1,162 @@
+﻿@model List<EscalasPascom.ViewModels.MissaViewModel>
+@{
+    var locais = ViewBag.Locais as List<EscalasPascom.Models.Local>;
+}
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+@if (TempData["Erro"] != null)
+{
+    <div class="alert alert-danger">@TempData["Erro"]</div>
+}
+
+<h2>Cadastro de Missas</h2>
+
+<form method="get" asp-action="Index" class="mb-3">
+    <select name="mes" class="form-select d-inline w-auto">
+        @for (int m = 1; m <= 12; m++)
+        {
+            <option value="@m" selected="@(m == ViewBag.MesSelecionado)">
+                @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)
+            </option>
+        }
+    </select>
+    <select name="ano" class="form-select d-inline w-auto">
+        @for (int a = DateTime.Now.Year - 1; a <= DateTime.Now.Year + 1; a++)
+        {
+            <option value="@a" selected="@(a == ViewBag.AnoSelecionado)">@a</option>
+        }
+    </select>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+<form asp-action="Importar" method="post" enctype="multipart/form-data" class="mb-3">
+    <input type="hidden" name="mes" value="@ViewBag.MesSelecionado" />
+    <input type="hidden" name="ano" value="@ViewBag.AnoSelecionado" />
+
+    <div class="input-group">
+        <input type="file" name="arquivo" class="form-control" accept=".xlsx,.xls" />
+        <button type="submit" class="btn btn-secondary">Importar Excel</button>
+    </div>
+    <small class="form-text text-muted">
+        Modelo esperado: Colunas <strong>Dia</strong>, <strong>Hora</strong>, <strong>Local</strong>, <strong>Descrição</strong>.
+        Colunas opcionais: <em>Transmissão</em> (Sim/Não), <em>Mídia</em> (Sim/Não), <em>Qtd Câmera/Som</em> (número).
+    </small>
+</form>
+
+<form method="post" asp-action="SalvarMissas" id="formMissas">
+    <table class="table table-bordered" id="tabelaMissas">
+        <thead>
+            <tr>
+                <th>Dia</th>
+                <th>Dia da Semana</th>
+                <th>Hora</th>
+                <th>Local</th>
+                <th>Descrição</th>
+                <th>Transmissão</th>
+                <th>Mídia</th>
+                <th>Quantidade Câmera/Som</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <input type="hidden" name="missas[@i].Id" value="@Model[i].Id" />
+                    <input type="hidden" name="missas[@i].Ano" value="@ViewBag.AnoSelecionado" />
+                    <input type="hidden" name="missas[@i].Mes" value="@ViewBag.MesSelecionado" />
+                    <td><input type="number" name="missas[@i].Dia" value="@Model[i].Dia" class="form-control" min="1" max="31" /></td>
+                    <td>
+                        @{
+                            var data = new DateTime(ViewBag.AnoSelecionado, ViewBag.MesSelecionado, Model[i].Dia);
+                            var diaSemana = data.ToString("dddd", System.Globalization.CultureInfo.CurrentCulture).ToUpper();
+                        }
+                        <span>@diaSemana</span>
+                    </td>
+                    <td><input type="time" name="missas[@i].Hora" value="@Model[i].Hora.ToString(@"hh\:mm")" class="form-control" /></td>
+                    <td>
+                        <select name="missas[@i].IdLocal" class="form-select">
+                            @foreach (var local in locais)
+                            {
+                                <option value="@local.Id" selected="@(Model[i].IdLocal == 0 ? local == locais.First() : local.Id == Model[i].IdLocal)">
+                                    @local.Nome
+                                </option>
+                            }
+                        </select>
+                    </td>
+                    <td><input type="text" name="missas[@i].Descricao" value="@Model[i].Descricao" class="form-control" /></td>
+                    <td><input type="checkbox" name="missas[@i].TemTransmissao" value="true" @(Model[i].TemTransmissao ? "checked" : "") /></td>
+                    <td><input type="checkbox" name="missas[@i].TemMidia" value="true" @(Model[i].TemMidia ? "checked" : "") /></td>
+                    <td><input type="number" name="missas[@i].QuantidadeCameraSom" value="@Model[i].QuantidadeCameraSom" class="form-control" min="1" max="5" /></td>
+                    <td><button type="button" class="btn btn-danger btn-sm" onclick="removerLinha(this)">Remover</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>    
+    <button type="button" class="btn btn-success" onclick="adicionarLinha()">Adicionar mais uma</button>
+    <button type="submit" class="btn btn-primary">Salvar todas</button>
+    <input type="hidden" id="missasRemovidas" name="missasRemovidas" value="" />
+</form>
+
+@section Scripts {
+    <script>       
+
+        function adicionarLinha() {
+            var index = document.querySelectorAll("#tabelaMissas tbody tr").length;
+            var ano = '@ViewBag.AnoSelecionado';
+            var mes = '@ViewBag.MesSelecionado';
+            var locais = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(locais));
+
+            var linha = `
+                <tr>
+                    <input type="hidden" name="missas[${index}].Id" value="0" />
+                    <input type="hidden" name="missas[${index}].Ano" value="${ano}" />
+                    <input type="hidden" name="missas[${index}].Mes" value="${mes}" />
+                    <td><input type="number" name="missas[${index}].Dia" class="form-control" min="1" max="31" /></td>
+                    <td><input type="time" name="missas[${index}].Hora" class="form-control" /></td>
+                    <td>
+                        <select name="missas[${index}].IdLocal" class="form-select">
+                            ${locais.map((l, idx) => `<option value="${l.Id}" ${idx === 0 ? 'selected' : ''}>${l.Nome}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td><input type="text" name="missas[${index}].Descricao" class="form-control" /></td>
+                    <td><input type="checkbox" name="missas[${index}].TemTransmissao" value="true" /></td>
+                    <td><input type="checkbox" name="missas[${index}].TemMidia" value="true" /></td>
+                    <td><input type="number" name="missas[${index}].QuantidadeCameraSom" value="[${index}].QuantidadeCameraSom" class="form-control" min="1" max="5" /></td>
+                    <td><button type="button" class="btn btn-danger btn-sm" onclick="removerLinha(this)">Remover</button></td>
+                </tr>`;
+            document.querySelector("#tabelaMissas tbody").insertAdjacentHTML("beforeend", linha);
+        }
+
+        function removerLinha(btn) {
+            const linha = btn.closest("tr");
+            const idInput = linha.querySelector("input[name$='.Id']");
+
+            // Se a missa já existe no banco (ID > 0), adicione o ID para ser removido
+            if (idInput && idInput.value !== '0') {
+                const missasRemovidasInput = document.getElementById("missasRemovidas");
+                let ids = missasRemovidasInput.value.split(',').filter(i => i); // Pega IDs existentes
+                ids.push(idInput.value); // Adiciona o novo ID
+                missasRemovidasInput.value = ids.join(','); // Salva na lista separada por vírgula
+            }
+
+            linha.remove();
+            reindexarLinhas(); // Mantenha a função de reindexar
+        }
+
+        function reindexarLinhas() {           
+            const linhas = document.querySelectorAll("#tabelaMissas tbody tr");
+
+           
+            linhas.forEach((linha, index) => {
+                const inputs = linha.querySelectorAll("input, select");
+                inputs.forEach(input => {                    
+                    input.name = input.name.replace(/missas\[\d+\]/, `missas[${index}]`);
+                });
+            });
+        }
+    </script>
+}

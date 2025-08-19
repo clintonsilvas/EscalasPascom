@@ -1,0 +1,68 @@
+﻿@model List<EscalasPascom.Models.Papel>
+@{
+    ViewData["Title"] = "Papéis";
+}
+
+<h2>Papéis</h2>
+
+<form asp-action="SalvarPapeis" method="post">
+    <table class="table" id="tabela-papeis">
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="hidden" name="[@i].Id" value="@Model[i].Id" />
+                        <input type="text" class="form-control" name="[@i].Descricao" value="@Model[i].Descricao" />
+                    </td>
+                    <td>
+                        @if (Model[i].Id > 0)
+                        {
+                            <form asp-action="Excluir" method="post" style="display:inline;">
+                                <input type="hidden" name="id" value="@Model[i].Id" />
+                                <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removerLinha(this)">Remover</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="button" class="btn btn-secondary" onclick="adicionarLinha()">Adicionar Papel</button>
+    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+</form>
+
+@section Scripts {
+    <script>
+        function adicionarLinha() {
+            var index = document.querySelectorAll('#tabela-papeis tbody tr').length;
+            var novaLinha = `
+                <tr>
+                    <td>
+                        <input type="hidden" name="[${index}].Id" value="0" />
+                        <input type="text" class="form-control" name="[${index}].Descricao" value="" />
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removerLinha(this)">Remover</button>
+                    </td>
+                </tr>
+            `;
+            document.querySelector('#tabela-papeis tbody').insertAdjacentHTML('beforeend', novaLinha);
+        }
+
+        function removerLinha(botao) {
+            botao.closest('tr').remove();
+        }
+    </script>
+}
