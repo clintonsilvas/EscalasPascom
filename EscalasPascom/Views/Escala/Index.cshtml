@@ -16,34 +16,19 @@
 
 <h2>Escala de Missas</h2>
 
-<form method="get" asp-action="Index" class="form-inline mb-3">
-    <label for="mes">Mês:</label>
-    <select id="mes" name="mes" class="form-control mx-2">
-        @foreach (var mes in meses)
+<form method="get" asp-action="Index" class="mb-3">
+    <select name="mes" class="form-select d-inline w-auto">
+        @for (int m = 1; m <= 12; m++)
         {
-            if (mes.Numero == mesSelecionado)
-            {
-                <option value="@mes.Numero" selected>@mes.Nome</option>
-            }
-            else
-            {
-                <option value="@mes.Numero">@mes.Nome</option>
-            }
+            <option value="@m" selected="@(m == ViewBag.MesSelecionado)">
+                @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)
+            </option>
         }
     </select>
-
-    <label for="ano">Ano:</label>
-    <select id="ano" name="ano" class="form-control mx-2">
-        @foreach (var a in anos)
+    <select name="ano" class="form-select d-inline w-auto">
+        @for (int a = DateTime.Now.Year - 1; a <= DateTime.Now.Year + 1; a++)
         {
-            if (a == anoSelecionado)
-            {
-                <option value="@a" selected>@a</option>
-            }
-            else
-            {
-                <option value="@a">@a</option>
-            }
+            <option value="@a" selected="@(a == ViewBag.AnoSelecionado)">@a</option>
         }
     </select>
     <button type="submit" class="btn btn-primary">Filtrar</button>
@@ -53,16 +38,32 @@
 <form method="post" asp-action="Sortear">
     <input type="hidden" name="mes" value="@mesSelecionado" />
     <input type="hidden" name="ano" value="@anoSelecionado" />
-    <button type="submit" class="btn btn-success mb-3"
-        @(sorteado ? "disabled" : "")>
-        Sortear Escala
+
+    @if (!sorteado)
+    {
+        <button type="submit" class="btn btn-success mb-3">
+            Sortear Escala
+        </button>
+    }
+    else
+    {
+        <div class="alert alert-info mb-3">
+            A escala de <b>@meses.First(m => m.Numero == mesSelecionado).Nome/@anoSelecionado</b> já foi sorteada.
+        </div>
+    }
+</form>
+<form method="get" asp-action="ExportarEscala">
+    <input type="hidden" name="mes" value="@mesSelecionado" />
+    <input type="hidden" name="ano" value="@anoSelecionado" />
+    <button type="submit" class="btn btn-success mb-3">
+        Exportar escalas para PDF
     </button>
 </form>
-
 <table class="table table-bordered">
     <thead>
         <tr>
             <th>Data</th>
+            <th>Dia da Semana</th>
             <th>Local</th>
             <th>Operador</th>
             <th>Câmera/Som</th>
@@ -89,6 +90,13 @@
 
             <tr>
                 <td>@missa.Data.ToString("dd/MM/yyyy")</td>
+                <td>
+                    @{
+                        var data = new DateTime(ViewBag.AnoSelecionado, ViewBag.MesSelecionado, missa.Data.Day);
+                        var diaSemana = data.ToString("dddd", System.Globalization.CultureInfo.CurrentCulture).ToUpper();
+                    }
+                    <span>@diaSemana</span>
+                </td>
                 <td>@missa.Local?.Nome</td>
                 <td>@string.Join(", ", operadores)</td>
                 <td>@string.Join(", ", fotografos)</td>

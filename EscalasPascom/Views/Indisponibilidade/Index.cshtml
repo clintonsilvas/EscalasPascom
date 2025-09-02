@@ -11,6 +11,7 @@
 }
 
 @{
+    
     var mesSelecionado = ViewBag.MesSelecionado as int? ?? DateTime.Now.Month;
     var anoSelecionado = ViewBag.AnoSelecionado as int? ?? DateTime.Now.Year;
 
@@ -25,51 +26,21 @@
     var anos = Enumerable.Range(DateTime.Now.Year - 2, 5).ToList();
 }
 
-<style>
-    /* Linhas alternadas */
-    .table-striped tbody tr:nth-child(odd) {
-        background-color: #f9f9f9;
-    }
-
-    /* Cabeçalho fixo */
-    .table-fixed-header thead th {
-        position: sticky;
-        top: 0;
-        background: white;
-        z-index: 2;
-    }
-</style>
-
 <h2>Indisponibilidades</h2>
 
-<form method="get" asp-action="Index" class="form-inline mb-3">
-    <label for="mes">Mês:</label>
-    <select id="mes" name="mes" class="form-control mx-2">
-        @foreach (var mes in meses)
+<form method="get" asp-action="Index" class="mb-3">
+    <select name="mes" class="form-select d-inline w-auto">
+        @for (int m = 1; m <= 12; m++)
         {
-            if (mes.Numero == mesSelecionado)
-            {
-                <option value="@mes.Numero" selected>@mes.Nome</option>
-            }
-            else
-            {
-                <option value="@mes.Numero">@mes.Nome</option>
-            }
+            <option value="@m" selected="@(m == ViewBag.MesSelecionado)">
+                @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m)
+            </option>
         }
     </select>
-
-    <label for="ano">Ano:</label>
-    <select id="ano" name="ano" class="form-control mx-2">
-        @foreach (var a in anos)
+    <select name="ano" class="form-select d-inline w-auto">
+        @for (int a = DateTime.Now.Year - 1; a <= DateTime.Now.Year + 1; a++)
         {
-            if (a == anoSelecionado)
-            {
-                <option value="@a" selected>@a</option>
-            }
-            else
-            {
-                <option value="@a">@a</option>
-            }
+            <option value="@a" selected="@(a == ViewBag.AnoSelecionado)">@a</option>
         }
     </select>
     <button type="submit" class="btn btn-primary">Filtrar</button>
@@ -83,12 +54,23 @@
         <table class="table table-bordered table-sm table-striped table-fixed-header">
             <thead>
                 <tr>
-                    <th>Pessoa</th>
+                    <th rowspan="2">Pessoa</th>
                     @for (int d = 1; d <= diasNoMes; d++)
                     {
-                        <th>@d</th>
+                        var data = new DateTime(anoSelecionado, mesSelecionado, d);
+                        var classe = (data.DayOfWeek == DayOfWeek.Saturday || data.DayOfWeek == DayOfWeek.Sunday) ? "final-semana" : "";
+                        <th class="@classe">@d</th>
                     }
-                    <th>Ações</th>
+                    <th rowspan="2">Ações</th>
+                </tr>
+                <tr>
+                    @for (int d = 1; d <= diasNoMes; d++)
+                    {
+                        var data = new DateTime(anoSelecionado, mesSelecionado, d);
+                        var classe = (data.DayOfWeek == DayOfWeek.Saturday || data.DayOfWeek == DayOfWeek.Sunday) ? "final-semana" : "";
+                        var nomeDia = data.ToString("ddd", new System.Globalization.CultureInfo("pt-BR")).Substring(0, 3);
+                        <th class="@classe">@nomeDia</th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -98,12 +80,14 @@
                         <td>@pessoa.Nome</td>
                         @for (int d = 1; d <= diasNoMes; d++)
                         {
+                            var data = new DateTime(anoSelecionado, mesSelecionado, d);
+                            var classe = (data.DayOfWeek == DayOfWeek.Saturday || data.DayOfWeek == DayOfWeek.Sunday) ? "final-semana" : "";
                             bool marcado = pessoa.Indisponibilidades.Any(i =>
-                                i.Data.Year == anoSelecionado &&
-                                i.Data.Month == mesSelecionado &&
-                                i.Data.Day == d
+                            i.Data.Year == anoSelecionado &&
+                            i.Data.Month == mesSelecionado &&
+                            i.Data.Day == d
                             );
-                            <td class="text-center">
+                            <td class="text-center @classe">
                                 <input type="checkbox"
                                        class="chk-@pessoa.Id"
                                        name="indisponibilidadesPorPessoa[@pessoa.Id][]"
@@ -112,8 +96,9 @@
                             </td>
                         }
                         <td>
-                            <button type="button" class="btn btn-sm btn-success" onclick="marcarTudo(@pessoa.Id)">Marcar tudo</button>
-                            <button type="button" class="btn btn-sm btn-warning" onclick="desmarcarTudo(@pessoa.Id)">Desmarcar tudo</button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="marcarTudo(@pessoa.Id)">MarcarTudo</button>
+                            <button type="button" class="btn btn-sm btn-info" onclick="marcarDiasDeSemana(@pessoa.Id)">Dias úteis</button>
+                            <button type="button" class="btn btn-sm btn-warning" onclick="desmarcarTudo(@pessoa.Id)">Desm. tudo</button>
                         </td>
                     </tr>
                 }
@@ -131,4 +116,66 @@
     function desmarcarTudo(id) {
         document.querySelectorAll(".chk-" + id).forEach(c => c.checked = false);
     }
+    function marcarDiasDeSemana(id) {
+        const mes = document.querySelector('input[name="mes"]').value;
+        const ano = document.querySelector('input[name="ano"]').value;
+
+        document.querySelectorAll(".chk-" + id).forEach(c => {
+            const dia = parseInt(c.value);
+            const data = new Date(ano, mes - 1, dia); 
+            const diaDaSemana = data.getDay();
+
+            if (diaDaSemana >= 1 && diaDaSemana <= 5) {
+                c.checked = true;
+            } else {
+                c.checked = false;
+            }
+        });
+    }
 </script>
+<style>
+    /* Linhas alternadas */
+    .table-striped tbody tr:nth-child(odd) {
+        background-color: #f9f9f9;
+    }
+
+    /* Cabeçalho fixo */
+    .table-fixed-header thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 2;
+    }
+
+    /* Estilo para fins de semana - Mais específico */
+    .table-fixed-header thead th.final-semana,
+    .table-fixed-header tbody td.final-semana {
+        background-color: #e6f7ff; /* Cor azul claro para destacar */
+        font-weight: bold;
+    }
+
+    .vertical-header {
+        writing-mode: vertical-rl; /* Faz o texto ficar na vertical */
+        transform: rotate(180deg); /* Gira o texto para que a leitura seja de baixo para cima */
+        width: 25px; /* Define uma largura para a coluna */
+        height: 80px; /* Define uma altura para a coluna */
+        text-align: left; /* Alinha o texto na base */
+        padding: 5px; /* Ajuste o espaçamento interno */
+        white-space: nowrap; /* Evita quebra de linha extra */
+    }
+
+    .table-fixed-header thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 2;
+        /* Adicione uma altura mínima para evitar sobreposição */
+        min-height: 40px;
+        box-sizing: border-box;
+    }
+
+    /* Para a segunda linha do cabeçalho */
+    .table-fixed-header thead tr:nth-child(2) th {
+        top: 25px; /* Ajuste este valor para a altura da primeira linha */
+    }
+</style>

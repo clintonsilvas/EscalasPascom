@@ -1,0 +1,92 @@
+﻿@model EscalasPascom.Models.Escala
+@{    
+    
+    ViewBag.Title = "Escala de Missas";
+}
+<body>
+    <div class="container-fluid py-2 border-bottom">
+        <div class="row align-items-center text-center">
+            <!-- Logo esquerda -->
+            <div class="col-auto">
+                <img src="/lib/imagens/logopascom.png" class="img-fluid" style="max-height: 80px;" alt="Logo Pascom">
+            </div>
+
+            <!-- Texto central -->
+            <div class="col">
+                <h2 class="mb-1">PARÓQUIA SÃO JOAQUIM</h2>
+                <h3 class="mb-0">DIOCESE DE GUAXUPÉ</h3>
+                <h3 class="mb-0">ESCALA PASTORAL DA COMUNICAÇÃO - PASCOM</h3>
+                <h3 class="mb-0">@Model.Mes/@Model.Ano</h3>
+            </div>
+
+            <!-- Logo direita -->
+            <div class="col-auto">
+                <img src="/lib/imagens/logoparoquia.png" class="img-fluid" style="max-height: 80px;" alt="Logo Paróquia">
+            </div>
+        </div>
+    </div>
+
+    
+
+    <table id="tabela-escala" class="table table-bordered">
+        
+        <thead>
+            <tr>
+                <th colspan="7" class="text-center">CELEBRAÇÕES EUCARÍSTICAS</th>
+            </tr>
+            <tr>                
+                <th colspan="2">Dia</th>
+                <th>Horário</th>
+                <th>Local</th>
+                <th>Operador</th>
+                <th>Câmera/Som</th>
+                <th>Mídia</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var missa in Model.Missas)
+            {
+                var operadores = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Operador")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+                var fotografos = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Foto/Som")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+                var midias = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Mídia")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+                <tr>
+                    @{
+                        var diaSemana = missa.Data.ToString("dddd", new System.Globalization.CultureInfo("pt-BR")).ToUpper();
+                    }
+                    <td>
+                        @missa.Data.ToString("dd")
+                    </td>
+                    <td style="width: 20vw">
+                        <span>@diaSemana</span>
+                        <br />
+                        @missa.Descricao
+                    </td>
+                    <td>@missa.Data.ToString("HH")h</td>
+                    <td>@missa.Local?.Nome</td>
+                    <td>@string.Join(", ", operadores)</td>
+                    <td>@string.Join(", ", fotografos)</td>
+                    <td>@string.Join(", ", midias)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a asp-action="ExportarPdf" asp-route-mes="@Model.Mes" asp-route-ano="@Model.Ano" class="btn btn-danger">
+        Exportar para PDF
+    </a>
+
+    <a asp-action="ExportarWord" asp-route-mes="@Model.Mes" asp-route-ano="@Model.Ano" class="btn btn-success">
+        Exportar para Word
+    </a>
+</body>
