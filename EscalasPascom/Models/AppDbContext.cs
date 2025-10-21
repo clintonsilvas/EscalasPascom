@@ -16,7 +16,7 @@ namespace EscalasPascom.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            
             modelBuilder.Entity<MissaPessoaCameraSom>()
                 .HasKey(mpcs => new { mpcs.MissaId, mpcs.PessoaId, mpcs.PapelId });
 
