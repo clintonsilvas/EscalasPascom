@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  escalaspascom:
+    image: ${DOCKER_REGISTRY-}escalaspascom
+    build:
+      context: .
+      dockerfile: EscalasPascom/Dockerfile
+
+  mysqlserver: 
+    image: mysql:8.0 
+    container_name: localhost
+    restart: always 
+    environment:      
+      MYSQL_ROOT_PASSWORD: "1234" 
+      MYSQL_DATABASE: "escalas"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data: 

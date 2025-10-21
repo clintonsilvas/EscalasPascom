@@ -6,11 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
-using A = DocumentFormat.OpenXml.Drawing;
-using Pic = DocumentFormat.OpenXml.Drawing.Pictures;
-using Wp = DocumentFormat.OpenXml.Drawing.Wordprocessing;
-using System.IO;
-using System.Linq;
+
 
 namespace EscalasPascom.Controllers
 {
@@ -203,7 +199,7 @@ namespace EscalasPascom.Controllers
 
         public IActionResult ExportarWord(int mes, int ano)
         {
-            var missas = _context.Missas.Include(m => m.Local).Include(m => m.Escalados).ThenInclude(e => e.Pessoa).Include(m => m.Escalados).ThenInclude(e => e.Papel).ToList();
+            var missas = _context.Missas.Include(m => m.Local).Include(m => m.Escalados).ThenInclude(e => e.Pessoa).Include(m => m.Escalados).ThenInclude(e => e.Papel).ToList().Where(m => m.Data.Month == mes && m.Data.Year == ano);
 
 
             // 2. Crie um documento em memória
