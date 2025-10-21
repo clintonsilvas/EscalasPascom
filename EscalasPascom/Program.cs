@@ -10,9 +10,16 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(
+    options.UseNpgsql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString) // Deixa o EF Core detectar a versão do seu MySQL
+        npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorCodesToAdd: null
+            );
+        }
     )
 );
 

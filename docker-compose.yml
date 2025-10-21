@@ -7,17 +7,18 @@ services:
       context: .
       dockerfile: EscalasPascom/Dockerfile
 
-  mysqlserver: 
-    image: mysql:8.0 
-    container_name: localhost
-    restart: always 
-    environment:      
-      MYSQL_ROOT_PASSWORD: "1234" 
-      MYSQL_DATABASE: "escalas"
+  postgresdb: 
+    image: postgres:16-alpine
+    container_name: postgresdb_local
+    restart: always
+    environment:
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: 1234 
+      POSTGRES_DB: escalas
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mysql_data: 
+  postgres_data:
