@@ -22,6 +22,21 @@ namespace EscalasPascom.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("EscalaMissa", b =>
+                {
+                    b.Property<int>("EscalasId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissasId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("EscalasId", "MissasId");
+
+                    b.HasIndex("MissasId");
+
+                    b.ToTable("EscalaMissa");
+                });
+
             modelBuilder.Entity("EscalasPascom.Models.Escala", b =>
                 {
                     b.Property<int>("Id")
@@ -30,18 +45,22 @@ namespace EscalasPascom.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Ano")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Mes")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("IdPastoral")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("PastoralId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PastoralId");
 
                     b.ToTable("Escalas");
                 });
@@ -66,8 +85,9 @@ namespace EscalasPascom.Migrations
                     b.Property<string>("Observacao")
                         .HasColumnType("text");
 
-                    b.Property<int>("PessoaId")
-                        .HasColumnType("integer");
+                    b.Property<string>("PessoaId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -110,48 +130,72 @@ namespace EscalasPascom.Migrations
                     b.Property<string>("Descricao")
                         .HasColumnType("text");
 
-                    b.Property<int?>("EscalaId")
+                    b.Property<int>("IdParoquia")
                         .HasColumnType("integer");
 
                     b.Property<int>("LocalId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuantidadeCameraSom")
+                    b.Property<int>("ParoquiaId")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("TemMidia")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("TemTransmissao")
-                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EscalaId");
-
                     b.HasIndex("LocalId");
+
+                    b.HasIndex("ParoquiaId");
 
                     b.ToTable("Missas");
                 });
 
-            modelBuilder.Entity("EscalasPascom.Models.MissaPessoaCameraSom", b =>
+            modelBuilder.Entity("EscalasPascom.Models.MissaEscala", b =>
                 {
+                    b.Property<int>("IdMissa")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdEscala")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EscalaId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("MissaId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PessoaId")
+                    b.HasKey("IdMissa", "IdEscala");
+
+                    b.HasIndex("EscalaId");
+
+                    b.HasIndex("MissaId");
+
+                    b.ToTable("MissaEscalas");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.MissaPessoa", b =>
+                {
+                    b.Property<string>("IdUsuario")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("IdMissa")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdPapel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissaId")
                         .HasColumnType("integer");
 
                     b.Property<int>("PapelId")
                         .HasColumnType("integer");
 
-                    b.HasKey("MissaId", "PessoaId", "PapelId");
+                    b.HasKey("IdUsuario", "IdMissa", "IdPapel");
+
+                    b.HasIndex("MissaId");
 
                     b.HasIndex("PapelId");
 
-                    b.HasIndex("PessoaId");
-
-                    b.ToTable("MissaPessoaCameraSom");
+                    b.ToTable("UsuarioMissas");
                 });
 
             modelBuilder.Entity("EscalasPascom.Models.Papel", b =>
@@ -166,12 +210,54 @@ namespace EscalasPascom.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("IdPastoral")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PastoralId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PastoralId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("Descricao", "IdPastoral")
+                        .IsUnique();
 
                     b.ToTable("Papeis");
                 });
 
-            modelBuilder.Entity("EscalasPascom.Models.Pessoa", b =>
+            modelBuilder.Entity("EscalasPascom.Models.PapelMissa", b =>
+                {
+                    b.Property<int>("IdMissa")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdPapel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MissaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PapelId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer");
+
+                    b.HasKey("IdMissa", "IdPapel");
+
+                    b.HasIndex("MissaId");
+
+                    b.HasIndex("PapelId");
+
+                    b.ToTable("MissaPapeis");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.Paroquia", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -179,36 +265,339 @@ namespace EscalasPascom.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsAtivo")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Cidade")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<string>("Nome")
+                    b.Property<string>("Diocese")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Pessoas");
+                    b.ToTable("Paroquias");
                 });
 
-            modelBuilder.Entity("PapelPessoa", b =>
+            modelBuilder.Entity("EscalasPascom.Models.Pastoral", b =>
                 {
-                    b.Property<int>("PapeisId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<int>("PessoasId")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("IdParoquia")
                         .HasColumnType("integer");
 
-                    b.HasKey("PapeisId", "PessoasId");
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.HasIndex("PessoasId");
+                    b.Property<int>("ParoquiaId")
+                        .HasColumnType("integer");
 
-                    b.ToTable("PapelPessoa");
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParoquiaId");
+
+                    b.ToTable("Pastorais");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.Usuario", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DataNascimento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsAtivo")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NomeCompleto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Telefone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TipoUsuario")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.UsuarioPapelPastoral", b =>
+                {
+                    b.Property<string>("IdUsuario")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("IdPapel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdPastoral")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PapelId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PastoralId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("IdUsuario", "IdPapel", "IdPastoral");
+
+                    b.HasIndex("PapelId");
+
+                    b.HasIndex("PastoralId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("UsuarioPapelPastoral");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("PastoralUsuario", b =>
+                {
+                    b.Property<int>("PastoraisId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UsuariosId")
+                        .HasColumnType("text");
+
+                    b.HasKey("PastoraisId", "UsuariosId");
+
+                    b.HasIndex("UsuariosId");
+
+                    b.ToTable("PastoralUsuario");
+                });
+
+            modelBuilder.Entity("EscalaMissa", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Escala", null)
+                        .WithMany()
+                        .HasForeignKey("EscalasId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Missa", null)
+                        .WithMany()
+                        .HasForeignKey("MissasId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.Escala", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Pastoral", "Pastoral")
+                        .WithMany("Escalas")
+                        .HasForeignKey("PastoralId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pastoral");
                 });
 
             modelBuilder.Entity("EscalasPascom.Models.Indisponibilidade", b =>
                 {
-                    b.HasOne("EscalasPascom.Models.Pessoa", "Pessoa")
+                    b.HasOne("EscalasPascom.Models.Usuario", "Pessoa")
                         .WithMany("Indisponibilidades")
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -219,25 +608,52 @@ namespace EscalasPascom.Migrations
 
             modelBuilder.Entity("EscalasPascom.Models.Missa", b =>
                 {
-                    b.HasOne("EscalasPascom.Models.Escala", "Escala")
-                        .WithMany("Missas")
-                        .HasForeignKey("EscalaId");
-
                     b.HasOne("EscalasPascom.Models.Local", "Local")
                         .WithMany("Missas")
                         .HasForeignKey("LocalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Escala");
+                    b.HasOne("EscalasPascom.Models.Paroquia", "Paroquia")
+                        .WithMany()
+                        .HasForeignKey("ParoquiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Local");
+
+                    b.Navigation("Paroquia");
                 });
 
-            modelBuilder.Entity("EscalasPascom.Models.MissaPessoaCameraSom", b =>
+            modelBuilder.Entity("EscalasPascom.Models.MissaEscala", b =>
                 {
+                    b.HasOne("EscalasPascom.Models.Escala", "Escala")
+                        .WithMany()
+                        .HasForeignKey("EscalaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("EscalasPascom.Models.Missa", "Missa")
-                        .WithMany("Escalados")
+                        .WithMany()
+                        .HasForeignKey("MissaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Escala");
+
+                    b.Navigation("Missa");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.MissaPessoa", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Usuario", "Usuario")
+                        .WithMany("MissasEscalado")
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Missa", "Missa")
+                        .WithMany("EscaladosNaMissa")
                         .HasForeignKey("MissaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -248,37 +664,149 @@ namespace EscalasPascom.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EscalasPascom.Models.Pessoa", "Pessoa")
-                        .WithMany("Missas")
-                        .HasForeignKey("PessoaId")
+                    b.Navigation("Missa");
+
+                    b.Navigation("Papel");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.Papel", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Pastoral", "Pastoral")
+                        .WithMany("Papeis")
+                        .HasForeignKey("PastoralId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Usuario", null)
+                        .WithMany("Papeis")
+                        .HasForeignKey("UsuarioId");
+
+                    b.Navigation("Pastoral");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.PapelMissa", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Missa", "Missa")
+                        .WithMany("MissaRequisitoPapel")
+                        .HasForeignKey("MissaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Papel", "Papel")
+                        .WithMany()
+                        .HasForeignKey("PapelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Missa");
 
                     b.Navigation("Papel");
-
-                    b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("PapelPessoa", b =>
+            modelBuilder.Entity("EscalasPascom.Models.Pastoral", b =>
                 {
-                    b.HasOne("EscalasPascom.Models.Papel", null)
-                        .WithMany()
-                        .HasForeignKey("PapeisId")
+                    b.HasOne("EscalasPascom.Models.Paroquia", "Paroquia")
+                        .WithMany("Pastorais")
+                        .HasForeignKey("ParoquiaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EscalasPascom.Models.Pessoa", null)
+                    b.Navigation("Paroquia");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.UsuarioPapelPastoral", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Papel", "Papel")
                         .WithMany()
-                        .HasForeignKey("PessoasId")
+                        .HasForeignKey("PapelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Pastoral", "Pastoral")
+                        .WithMany()
+                        .HasForeignKey("PastoralId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Papel");
+
+                    b.Navigation("Pastoral");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("EscalasPascom.Models.Escala", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.Navigation("Missas");
+                    b.HasOne("EscalasPascom.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PastoralUsuario", b =>
+                {
+                    b.HasOne("EscalasPascom.Models.Pastoral", null)
+                        .WithMany()
+                        .HasForeignKey("PastoraisId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EscalasPascom.Models.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuariosId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("EscalasPascom.Models.Local", b =>
@@ -288,14 +816,30 @@ namespace EscalasPascom.Migrations
 
             modelBuilder.Entity("EscalasPascom.Models.Missa", b =>
                 {
-                    b.Navigation("Escalados");
+                    b.Navigation("EscaladosNaMissa");
+
+                    b.Navigation("MissaRequisitoPapel");
                 });
 
-            modelBuilder.Entity("EscalasPascom.Models.Pessoa", b =>
+            modelBuilder.Entity("EscalasPascom.Models.Paroquia", b =>
+                {
+                    b.Navigation("Pastorais");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.Pastoral", b =>
+                {
+                    b.Navigation("Escalas");
+
+                    b.Navigation("Papeis");
+                });
+
+            modelBuilder.Entity("EscalasPascom.Models.Usuario", b =>
                 {
                     b.Navigation("Indisponibilidades");
 
-                    b.Navigation("Missas");
+                    b.Navigation("MissasEscalado");
+
+                    b.Navigation("Papeis");
                 });
 #pragma warning restore 612, 618
         }

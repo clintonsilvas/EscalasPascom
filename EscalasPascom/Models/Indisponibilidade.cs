@@ -3,8 +3,8 @@
     public class Indisponibilidade
     {
         public int Id { get; set; }
-        public int PessoaId { get; set; }
-        public Pessoa Pessoa { get; set; }
+        public string PessoaId { get; set; }
+        public Usuario Pessoa { get; set; }
 
         public DateTime Data { get; set; }
 
