@@ -57,3 +57,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+Console.WriteLine($"Ambiente: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"Conexão: {builder.Configuration.GetConnectionString("DefaultConnection")}");

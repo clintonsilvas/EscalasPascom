@@ -6,7 +6,8 @@ services:
     build:
       context: .
       dockerfile: EscalasPascom/Dockerfile
-
+    environment:
+       - ASPNETCORE_ENVIRONMENT=Production
   postgresdb: 
     image: postgres:16-alpine
     container_name: postgresdb_local

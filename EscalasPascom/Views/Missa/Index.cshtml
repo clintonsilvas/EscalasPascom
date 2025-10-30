@@ -68,7 +68,14 @@
                     <input type="hidden" name="missas[@i].Id" value="@Model[i].Id" />
                     <input type="hidden" name="missas[@i].Ano" value="@ViewBag.AnoSelecionado" />
                     <input type="hidden" name="missas[@i].Mes" value="@ViewBag.MesSelecionado" />
-                    <td><input type="number" name="missas[@i].Dia" value="@Model[i].Dia" class="form-control" min="1" max="31" /></td>
+                    <td>
+                        <input type="number" name="missas[@i].Dia"
+                               value="@Model[i].Dia"
+                               class="form-control"
+                               min="1" max="31"
+                               oninput="atualizarDiaSemana(this)" />
+                    </td>
+                    
                     <td><span class="diaSemana"></span></td>
                     <td><input type="time" name="missas[@i].Hora" value="@Model[i].Hora.ToString(@"hh\:mm")" class="form-control" /></td>
                     <td>
@@ -176,7 +183,12 @@
                     input.name = input.name.replace(/missas\[\d+\]/, `missas[${index}]`);
                 });
             });
-        }       
+        }
+                document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("input[name$='.Dia']").forEach(input => {
+                atualizarDiaSemana(input);
+            });
+        });
 
     </script>
 }
