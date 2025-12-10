@@ -72,16 +72,14 @@ namespace EscalasPascom.Controllers
         {
             int mesSel = mes ?? DateTime.Now.Month;
             int anoSel = ano ?? DateTime.Now.Year;
-
-            // 🔹 Cria uma nova escala
+            
             var escala = new Escala
             {
                 Nome = $"Escala {mesSel}/{anoSel}",
                 Mes = mesSel.ToString(),
                 Ano = anoSel
             };
-
-            // Busca tudo de uma vez
+            
             var missas = _context.Missas
                 .Include(m => m.Local)
                 .Include(m => m.Escalados)
