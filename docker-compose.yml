@@ -1,4 +1,4 @@
-version: '3.4'
+version: "4.0"
 
 services:
   escalaspascom:
@@ -7,19 +7,30 @@ services:
       context: .
       dockerfile: EscalasPascom/Dockerfile
     environment:
-       - ASPNETCORE_ENVIRONMENT=Production
-  postgresdb: 
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+
+  postgresdb:
     image: postgres:16-alpine
     container_name: postgresdb_local
     restart: always
-    environment:
-      POSTGRES_USER: postgres 
-      POSTGRES_PASSWORD: 1234 
-      POSTGRES_DB: escalas
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_local
+    env_file:
+      - .env
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgresdb
+    networks:
+      - default
 
 volumes:
   postgres_data:
