@@ -4,8 +4,8 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using EscalasPascom.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
+using NPOI.XWPF.UserModel;
+using System.Globalization;
 
 
 namespace EscalasPascom.Controllers
@@ -197,10 +197,17 @@ namespace EscalasPascom.Controllers
 
         public IActionResult ExportarWord(int mes, int ano)
         {
-            var missas = _context.Missas.Include(m => m.Local).Include(m => m.Escalados).ThenInclude(e => e.Pessoa).Include(m => m.Escalados).ThenInclude(e => e.Papel).ToList().Where(m => m.Data.Month == mes && m.Data.Year == ano);
+            
+            var missas = _context.Missas
+                .Include(m => m.Local)
+                .Include(m => m.Escalados)
+                    .ThenInclude(e => e.Pessoa)
+                .Include(m => m.Escalados)
+                    .ThenInclude(e => e.Papel)
+                .Where(m => m.Data.Month == mes && m.Data.Year == ano)
+                .ToList();
 
-
-            // 2. Crie um documento em memória
+            
             using (MemoryStream memStream = new MemoryStream())
             {
                 using (WordprocessingDocument wordDocument = WordprocessingDocument.Create(memStream, WordprocessingDocumentType.Document))
@@ -208,33 +215,88 @@ namespace EscalasPascom.Controllers
                     MainDocumentPart mainPart = wordDocument.AddMainDocumentPart();
                     mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document();
                     Body body = mainPart.Document.AppendChild(new Body());
-                   
+
+                    // 3. Definição de Estilos
+                    RunProperties defaultRunProps = new RunProperties(
+                        new RunFonts() { Ascii = "Consolas", HighAnsi = "Consolas" },
+                        new FontSize() { Val = "22" } // 11pt
+                    );
+
+                    // 4. Cabeçalho do Documento
+                    Paragraph header = new Paragraph(
+                        new ParagraphProperties(
+                            new Justification() { Val = JustificationValues.Center }
+                        ),
+                        // CORREÇÃO: Usar 'new DocumentFormat.OpenXml.Wordprocessing.Text()'
+                        new Run(new RunProperties(
+                            new RunFonts() { Ascii = "Consolas", HighAnsi = "Consolas" },
+                            new FontSize() { Val = "26" }, // 13pt
+                            new Bold()
+                        ), new DocumentFormat.OpenXml.Wordprocessing.Text($"ESCALA {mes}/{ano}"))
+                    );
+                    body.AppendChild(header);
+                    body.AppendChild(new Paragraph(new Run(new DocumentFormat.OpenXml.Wordprocessing.Text("")))); // espaço
+
+                    // 5. Estrutura da Tabela
                     Table table = new Table();
-                    
+
+                    // AJUSTE: TableWidth para "10000" (100% da largura)
                     TableProperties tblProps = new TableProperties(
+                        new TableWidth() { Type = TableWidthUnitValues.Pct, Width = "10000" },
                         new TableBorders(
-                            new TopBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 12 },
-                            new BottomBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 12 },
-                            new LeftBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 12 },
-                            new RightBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 12 },
-                            new InsideHorizontalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 12 },
-                            new InsideVerticalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 12 }
+                            new TopBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                            new BottomBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                            new LeftBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                            new RightBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                            new InsideHorizontalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                            new InsideVerticalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 }
                         )
                     );
                     table.AppendChild(tblProps);
 
-                                        
+                    // 6. Cabeçalho da Tabela
                     TableRow headerRow = new TableRow();
-                    string[] headers = { "Data", "Dia", "Horario", "Local", "Operador", "Câmera/Som", "Mídia" };
-                    foreach (var header in headers)
+                    string[] headers = { "Dia/Descrição", "Horário", "Local", "Operador", "Câmera/Som", "Mídia" };
+                    foreach (var h in headers)
                     {
-                        TableCell cell = new TableCell();
-                        cell.Append(new Paragraph(new Run(new Text(header))));
+                        TableCell cell = new TableCell(
+                            new TableCellProperties(
+                                // Centralização Vertical
+                                new TableCellVerticalAlignment() { Val = TableVerticalAlignmentValues.Center }
+                            ),
+                            new Paragraph(
+                                new ParagraphProperties(new Justification() { Val = JustificationValues.Center }), // Centralização Horizontal
+                                new Run(new RunProperties(
+                                    new RunFonts() { Ascii = "Consolas", HighAnsi = "Consolas" },
+                                    new FontSize() { Val = "26" },
+                                    new Bold()
+                                ), new DocumentFormat.OpenXml.Wordprocessing.Text(h))
+                            )
+                        );
                         headerRow.Append(cell);
                     }
                     table.AppendChild(headerRow);
 
-                    // 5. Preencher a tabela com os dados
+                    // 7. Função de Ajuda para Células de Dados (Centralização e Preenchimento)
+                    TableCell CreateCenteredCell(string text)
+                    {
+                        // Se o texto for vazio, use "======"
+                        string content = string.IsNullOrEmpty(text) ? "======" : text;
+
+                        return new TableCell(
+                            new TableCellProperties(
+                                // Centralização Vertical
+                                new TableCellVerticalAlignment() { Val = TableVerticalAlignmentValues.Center }
+                            ),
+                            new Paragraph(
+                                // Centralização Horizontal
+                                new ParagraphProperties(new Justification() { Val = JustificationValues.Center }),
+                                new Run(defaultRunProps.CloneNode(true) as RunProperties, new DocumentFormat.OpenXml.Wordprocessing.Text(content))
+                            )
+                        );
+                    }
+
+                    // 8. Dados da Tabela
                     foreach (var missa in missas)
                     {
                         TableRow dataRow = new TableRow();
@@ -242,138 +304,68 @@ namespace EscalasPascom.Controllers
                         var operadores = string.Join(", ", missa.Escalados.Where(e => e.Papel?.Descricao == "Operador").Select(e => e.Pessoa.Nome));
                         var cameraSom = string.Join(", ", missa.Escalados.Where(e => e.Papel?.Descricao == "Foto/Som").Select(e => e.Pessoa.Nome));
                         var midia = string.Join(", ", missa.Escalados.Where(e => e.Papel?.Descricao == "Mídia").Select(e => e.Pessoa.Nome));
-                        var diaSemana = missa.Data.ToString("dddd", new System.Globalization.CultureInfo("pt-BR")).ToUpper();
+                        var diaSemana = missa.Data.ToString("dddd", new CultureInfo("pt-BR")).ToUpper();
 
-                        dataRow.Append(new TableCell(new Paragraph(new Run(new Text(missa.Data.ToString("dd"))))));
-
-                        // Célula 2: Dia e Descrição (ajustado)
-                        TableCell diaDescricaoCell = new TableCell();
-
-                        // Parágrafo para o Dia da Semana em negrito
-                        Paragraph diaParagraph = new Paragraph(
-                            new Run(new RunProperties(new Bold()), new Text(diaSemana))
+                        // Célula Dia/Descrição (Ligeiramente diferente devido ao Break)
+                        TableCell diaDescricaoCell = new TableCell(
+                            new TableCellProperties(
+                                new TableCellVerticalAlignment() { Val = TableVerticalAlignmentValues.Center } // Centralização Vertical
+                            ),
+                            new Paragraph(
+                                new ParagraphProperties(
+                                    new Justification() { Val = JustificationValues.Center }, // Centralização Horizontal
+                                    new SpacingBetweenLines() { Line = "200" }
+                                ),
+                                new Run(defaultRunProps.CloneNode(true) as RunProperties, new DocumentFormat.OpenXml.Wordprocessing.Text(diaSemana)),
+                                new Break(),
+                                new Run(defaultRunProps.CloneNode(true) as RunProperties, new DocumentFormat.OpenXml.Wordprocessing.Text(missa.Descricao))
+                            )
                         );
-
-                        // Parágrafo para a Descrição com fonte menor
-                        Paragraph descricaoParagraph = new Paragraph(
-                            new Run(new RunProperties(new FontSize() { Val = "16" }), new Text(missa.Descricao)) // Tamanho da fonte menor (16 em "points" é 8)
-                        );
-
-                        diaDescricaoCell.Append(diaParagraph, descricaoParagraph);
                         dataRow.Append(diaDescricaoCell);
 
-                        //dataRow.Append(new TableCell(new Paragraph(new Run(new Text(diaSemana)))));
-                        dataRow.Append(new TableCell(new Paragraph(new Run(new Text(missa.Data.ToString("HH:mm"))))));
-                        dataRow.Append(new TableCell(new Paragraph(new Run(new Text(missa.Local?.Nome)))));
-                        dataRow.Append(new TableCell(new Paragraph(new Run(new Text(operadores)))));
-                        dataRow.Append(new TableCell(new Paragraph(new Run(new Text(cameraSom)))));
-                        dataRow.Append(new TableCell(new Paragraph(new Run(new Text(midia)))));
+                        // Demais Células usando a função de ajuda
+                        dataRow.Append(CreateCenteredCell(missa.Data.ToString("HH:mm")));
+                        dataRow.Append(CreateCenteredCell(missa.Local?.Nome));
+                        dataRow.Append(CreateCenteredCell(operadores));
+                        dataRow.Append(CreateCenteredCell(cameraSom));
+                        dataRow.Append(CreateCenteredCell(midia));
 
                         table.AppendChild(dataRow);
                     }
-                    body.AppendChild(table);
 
+                    body.AppendChild(table);
                     mainPart.Document.Save();
                 }
 
-                // 6. Retorne o arquivo para o navegador
+                // 9. Retorno do Arquivo
                 memStream.Position = 0;
-                return File(memStream.ToArray(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Escala.docx");
+                return File(memStream.ToArray(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"Escala_{mes}_{ano}.docx");
             }
         }
-        public IActionResult ExportarPdf(int mes, int ano)
+
+
+
+        public async Task<IActionResult> ExportarHtml(int mes, int ano)
         {
-            var missas = _context.Missas
-                .Include(m => m.Local)
-                .Include(m => m.Escalados)
-                    .ThenInclude(e => e.Pessoa)
-                .Include(m => m.Escalados)
-                    .ThenInclude(e => e.Papel)
-                .Where(m => m.Data.Month == mes && m.Data.Year == ano) // filtra por mês e ano
-                .ToList();
-            var document = QuestPDF.Fluent.Document.Create(container =>
-            {
-                container.Page(page =>
-                {
-                    page.Size(PageSizes.A4);
-                    page.Margin(25);
-                    page.Header().Row(row =>
-                    {
-                        row.RelativeColumn().Container().Height(60).Image("wwwroot/lib/imagens/logopascom.png");
+            var escala = _context.Escalas
+                .Include(e => e.Missas)
+                    .ThenInclude(m => m.Local)
+                .Include(e => e.Missas)
+                    .ThenInclude(m => m.Escalados)
+                        .ThenInclude(e => e.Pessoa)
+                .Include(e => e.Missas)
+                    .ThenInclude(m => m.Escalados)
+                        .ThenInclude(e => e.Papel)
+                .FirstOrDefault(e => e.Mes == mes.ToString() && e.Ano == ano);
 
-                        // Coluna para o texto central
-                        row.RelativeColumn(2).Column(column =>
-                        {
-                            column.Item().AlignCenter().Text("PARÓQUIA SÃO JOAQUIM").FontSize(15).Bold();
-                            column.Item().AlignCenter().Text("DIOCESE DE GUAXUPÉ").FontSize(12).Bold();
-                            column.Item().AlignCenter().Text("ESCALA PASTORAL DA COMUNICAÇÃO - PASCOM").FontSize(12).Bold();                            
-                        });
+            if (escala == null)
+                return NotFound("Escala não encontrada.");
 
-                        row.RelativeColumn().Container().Height(70).Image("wwwroot/lib/imagens/logoparoquia.png");
-                    });
-
-                    page.Content().Table(table =>
-                    {
-                        // Cabeçalho da tabela
-                        table.ColumnsDefinition(columns =>
-                        {   
-                            columns.RelativeColumn(1);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(2);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(3);
-                        });
-
-                        table.Cell().Row(1).ColumnSpan(7).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                            .Text("Celebrações Eucarísticas").Bold();
-
-                        table.Cell().Row(2).Column(1).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Dia");
-                        table.Cell().Row(2).Column(2).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Descrição");
-                        table.Cell().Row(2).Column(3).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Horário");
-                        table.Cell().Row(2).Column(4).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Local");
-                        table.Cell().Row(2).Column(5).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Operador");
-                        table.Cell().Row(2).Column(6).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Câmera/Som");
-                        table.Cell().Row(2).Column(7).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Text("Mídia");
-
-                        uint rowIndex = 3;
-                        foreach (var missa in missas)
-                        {
-                            table.Cell().Row(rowIndex).Column(1).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                                .Text(missa.Data.ToString("dd"));
-
-                            table.Cell().Row(rowIndex).Column(2).Container().Border(1).Padding(5).AlignCenter().AlignMiddle().Column(column =>
-                            {
-                                column.Item().Text(missa.Data.ToString("dddd", new System.Globalization.CultureInfo("pt-BR")).ToUpper()).Bold();
-                                column.Item().Text(missa.Descricao).FontSize(8);
-                            });
-
-                            table.Cell().Row(rowIndex).Column(3).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                                .Text(missa.Data.ToString("HH:mm") + "h");
-
-                            table.Cell().Row(rowIndex).Column(4).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                                .Text(missa.Local?.Nome);
-
-                            table.Cell().Row(rowIndex).Column(5).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                                .Text(string.Join(", ", missa.Escalados.Where(e => e.Papel?.Descricao == "Operador").Select(e => e.Pessoa.Nome)));
-
-                            table.Cell().Row(rowIndex).Column(6).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                                .Text(string.Join(", ", missa.Escalados.Where(e => e.Papel?.Descricao == "Foto/Som").Select(e => e.Pessoa.Nome)));
-
-                            table.Cell().Row(rowIndex).Column(7).Container().Border(1).Padding(5).AlignCenter().AlignMiddle()
-                                .Text(string.Join(", ", missa.Escalados.Where(e => e.Papel?.Descricao == "Mídia").Select(e => e.Pessoa.Nome)));
-
-                            rowIndex++;
-                        }
-
-                    });
-                });
-            });
-
-            byte[] pdfBytes = document.GeneratePdf();
-            return File(pdfBytes, "application/pdf", "Escala.pdf");
+            Response.Headers.Add("Content-Disposition", "inline; filename=Escala.html");
+            Response.ContentType = "text/html";
+            return View("ExportarEscalaPdf", escala);
         }
+
 
     }
 }

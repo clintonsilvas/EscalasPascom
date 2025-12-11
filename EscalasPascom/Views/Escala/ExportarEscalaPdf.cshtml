@@ -1,0 +1,139 @@
+﻿@model EscalasPascom.Models.Escala
+@{
+    Layout = null;
+    ViewBag.Title = "Escala de Missas";
+
+    // Define cores possíveis
+    var cores = new[] { "red", "blue", "purple", "green", "orange", "teal" };
+    var rnd = new Random(Model.Mes.GetHashCode() + Model.Ano); // mesma cor por mês/ano
+    var corEscala = cores[rnd.Next(cores.Length)];
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Escala @Model.Mes/@Model.Ano</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .header-table td {
+            padding: 5px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .img-logo {
+            max-height: 80px;
+        }
+
+        .table-escala {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-escala th, .table-escala td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .dia-semana {
+            font-weight: bold;
+        }
+
+        .cor-escala {
+            color: @corEscala;
+            font-weight: bold;
+        }
+
+        .header-celebracoes {
+            background-color: @corEscala;
+            color: white;
+            font-weight: bold;
+        }
+
+        .header-linha {
+            background-color: @corEscala;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <table class="header-table">
+        <tr>
+            <td style="width: 15%;"><img src="@Url.Content("~/lib/imagens/logopascom.png")" class="img-logo" alt="Logo Pascom"></td>
+            <td style="width: 70%;" class="text-center">
+                <h2 style="margin: 0;">PARÓQUIA SÃO JOAQUIM</h2>
+                <h3 style="margin: 0;">DIOCESE DE GUAXUPÉ</h3>
+                <h3 style="margin: 0;">ESCALA PASTORAL DA COMUNICAÇÃO - PASCOM</h3>
+                <h3 class="cor-escala" style="margin:0;">@Model.Mes/@Model.Ano</h3>
+            </td>
+            <td style="width: 15%;"><img src="@Url.Content("~/lib/imagens/logoparoquia.png")" class="img-logo" alt="Logo Paróquia"></td>
+        </tr>
+    </table>
+
+    <table class="table-escala">
+        <thead>
+            <tr class="header-celebracoes">
+                <th colspan="7">CELEBRAÇÕES EUCARÍSTICAS</th>
+            </tr>
+            <tr class="header-linha">
+                <th colspan="2">Dia</th>
+                <th>Horário</th>
+                <th>Local</th>
+                <th>Operador</th>
+                <th>Câmera/Som</th>
+                <th>Mídia</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var missa in Model.Missas)
+            {
+                var operadores = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Operador")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+                var fotografos = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Foto/Som")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+                var midias = missa.Escalados
+                .Where(e => e.Papel?.Descricao == "Mídia")
+                .Select(e => e.Pessoa.Nome)
+                .ToList();
+
+                <tr>
+                    <td style="width: 5%;">@missa.Data.ToString("dd")</td>
+                    <td style="width: 25%; text-align: center;">
+                        <span class="dia-semana">@missa.Data.ToString("dddd", new System.Globalization.CultureInfo("pt-BR")).ToUpper()</span>
+                        <br />
+                        <span class="cor-escala">@missa.Descricao</span>
+                    </td>
+                    <td style="width: 10%;">@missa.Data.ToString("HH")h</td>
+                    <td style="width: 15%;">@missa.Local?.Nome</td>
+                    <td>@string.Join(", ", operadores)</td>
+                    <td>@string.Join(", ", fotografos)</td>
+                    <td>@string.Join(", ", midias)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</body>
+</html>

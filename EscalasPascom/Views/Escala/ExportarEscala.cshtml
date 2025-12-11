@@ -3,7 +3,7 @@
     
     ViewBag.Title = "Escala de Missas";
 }
-<body>
+<body>    
     <div class="container-fluid py-2 border-bottom">
         <div class="row align-items-center text-center">
             <!-- Logo esquerda -->
@@ -82,10 +82,10 @@
             }
         </tbody>
     </table>
-    <a asp-action="ExportarPdf" asp-route-mes="@Model.Mes" asp-route-ano="@Model.Ano" class="btn btn-danger">
-        Exportar para PDF
+    <a asp-action="ExportarHtml" asp-route-mes="@Model.Mes" asp-route-ano="@Model.Ano" class="btn btn-primary" target="_blank">
+        Abrir Escala (HTML)
     </a>
-
+    
     <a asp-action="ExportarWord" asp-route-mes="@Model.Mes" asp-route-ano="@Model.Ano" class="btn btn-success">
         Exportar para Word
     </a>
