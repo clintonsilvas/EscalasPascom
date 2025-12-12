@@ -173,7 +173,48 @@ namespace EscalasPascom.Controllers
             return View("Index", missas);
         }
 
-        
+        public IActionResult ExcluirEscalaSorteada(int mes, int ano)
+        {
+            var escala = _context.Escalas
+                .Include(e => e.Missas)
+                    .ThenInclude(m => m.Escalados)
+                .FirstOrDefault(e => e.Mes == mes.ToString() && e.Ano == ano);
+
+            if (escala == null)
+                return RedirectToAction("Index", new { mes = mes, ano = ano });
+
+            
+            try
+            {
+                foreach (var missa in escala.Missas)
+                {
+                    // Remove os escalados daquela missa
+                    if (missa.Escalados != null && missa.Escalados.Any())
+                    {
+                        _context.Set<MissaPessoaCameraSom>().RemoveRange(missa.Escalados);
+                    }
+
+                    // Desvincula a escala da missa (não deleta a missa)
+                    missa.EscalaId = null;
+                }
+
+                // Remove a escala
+                _context.Escalas.Remove(escala);
+
+                _context.SaveChanges();
+                TempData["SuccessMessage"] = "Escala excluída com sucesso.";
+            }
+            catch
+            {
+                TempData["ErrorMessage"] = "Ocorreu um erro ao excluir a escala.";
+                throw;
+            }
+            
+
+            return RedirectToAction("Index", new { mes = mes, ano = ano });
+        }
+
+
         public IActionResult ExportarEscala(int mes, int ano)
         {
             var escala = _context.Escalas
