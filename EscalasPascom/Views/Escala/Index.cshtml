@@ -16,6 +16,20 @@
 
 <h2>Escala de Missas</h2>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
 <form method="get" asp-action="Index" class="mb-3">
     <select name="mes" class="form-select d-inline w-auto">
         @for (int m = 1; m <= 12; m++)
@@ -50,6 +64,9 @@
         <div class="alert alert-info mb-3">
             A escala de <b>@meses.First(m => m.Numero == mesSelecionado).Nome/@anoSelecionado</b> já foi sorteada.
         </div>
+        <a asp-action="ExcluirEscalaSorteada" asp-route-mes="@mesSelecionado" asp-route-ano="@anoSelecionado" class="btn btn-danger">
+            Excluir escala
+        </a>
     }
 </form>
 <form method="get" asp-action="ExportarEscala">

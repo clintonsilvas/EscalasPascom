@@ -12,7 +12,7 @@ namespace EscalasPascom.Models
         public DbSet<Indisponibilidade> Indisponibilidades { get; set; }
         public DbSet<Local> Locais { get; set; }
         public DbSet<Escala> Escalas { get; set; }
-
+   
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
